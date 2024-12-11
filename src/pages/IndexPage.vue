@@ -1,43 +1,89 @@
 <template>
-  <q-page class="row items-center justify-evenly">
-    <example-component
-      title="Example component"
-      active
-      :todos="todos"
-      :meta="meta"
-    ></example-component>
+  <q-page>
+    <q-form>
+      <div class="q-pa-md q-gutter-md">
+        <q-input
+          :input-style="{ color: color }"
+          :color="color"
+          v-model="text"
+          filled
+          autogrow
+          clearable
+          @update:model-value="onInputChange"
+        />
+      </div>
+    </q-form>
   </q-page>
 </template>
-
 <script setup lang="ts">
-import { ref } from 'vue';
-import type { Todo, Meta } from 'components/models';
-import ExampleComponent from 'components/ExampleComponent.vue';
+import { onMounted, ref } from 'vue'
 
-const todos = ref<Todo[]>([
-  {
-    id: 1,
-    content: 'ct1'
-  },
-  {
-    id: 2,
-    content: 'ct2'
-  },
-  {
-    id: 3,
-    content: 'ct3'
-  },
-  {
-    id: 4,
-    content: 'ct4'
-  },
-  {
-    id: 5,
-    content: 'ct5'
-  }
-]);
+const text = ref('')
+const color = ref('')
 
-const meta = ref<Meta>({
-  totalCount: 1200
-});
+onMounted(() => {
+  toggleInputColor()
+  changesFromMenu()
+})
+
+function openNewFile(fileContent: string) {
+  text.value = fileContent
+}
+
+function saveChanges(filePath: string) {
+  if (text.value.trim() == '') return
+  window.file.sendTextForChanges(filePath, text.value)
+}
+
+function saveNewFile() {
+  if (text.value.trim() == '') return
+  window.file.sendTextForNewFile(text.value)
+}
+
+function cleanInput(content: string) {
+  text.value = content
+}
+
+function changesFromMenu() {
+  window.file.menuAction((menuActionData: string[]) => {
+    if (menuActionData[0] == 'open-file') openNewFile(menuActionData[1]!)
+    if (menuActionData[0] == 'save-changes') saveChanges(menuActionData[1]!)
+    if (menuActionData[0] == 'save-new-file') saveNewFile()
+    if (menuActionData[0] == 'clean-all') cleanInput(menuActionData[1]!)
+  })
+}
+
+function toggleInputColor() {
+  color.value = localStorage.getItem('input-color')!
+  window.change.inputColor((inputColor) => 
+  (localStorage.setItem('input-color', inputColor),
+  (color.value = inputColor)),
+  )
+}
+
+function onInputChange() {
+  const firstLine = text.value.split('\n')[0];
+  window.title.displayChangeIndicator(firstLine!.slice(0, 30));
+}
+
 </script>
+
+<style>
+:root {
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #333;
+    color: white;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  body {
+    background: #ddd;
+    color: black;
+  }
+}
+</style>
