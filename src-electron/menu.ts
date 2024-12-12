@@ -26,8 +26,8 @@ export class ElectronMenu {
           {
             label: 'Save changes',
             accelerator: 'Ctrl+S',
+            enabled: filePath != null,
             click: () => {
-              if(!filePath) return;
               const menuActionData = [menuActions[1], filePath];
               mainWindow?.webContents.send('menu-action', menuActionData);
             },
@@ -150,7 +150,7 @@ function sendInputColor(mainWindow: BrowserWindow | null) {
 
 function cleanAll(mainWindow: BrowserWindow | null){
   filePath = null;
-  mainWindow?.setTitle('');
+  mainWindow?.setTitle('Sem título');
 
   const menuActionData = [menuActions[3], ''];
   mainWindow?.webContents.send('menu-action', menuActionData);
@@ -169,10 +169,14 @@ async function openFile(mainWindow: BrowserWindow | null) {
 
   mainWindow?.setTitle(path.basename(filePath));
   mainWindow?.webContents.send('menu-action', menuActionData);
+
+  const reloadedMenu = new ElectronMenu().createMenu();
+  mainWindow?.setMenu(reloadedMenu)
 }
 
 async function handleSaveNewFile(_event: IpcMainEvent, fileText: string) {
-  const defaultName = fileText.slice(0, 10);
+  const firstLine = fileText.split('\n')[0];
+  const defaultName = firstLine!.slice(0, 30);
   const result = await dialog.showSaveDialog({
     title: 'Salvar arquivo',
     defaultPath: defaultName,
@@ -201,7 +205,7 @@ async function handleSaveChanges(
   dialog.showMessageBox({
     type: 'none',
     title: 'Arquivo Modificado',
-    message: 'O texto do arquivo foi salvo com sucesso!',
+    message: 'O texto do arquivo foi modificado!',
   });
   mainWindow?.setTitle(path.basename(filePath));
 }

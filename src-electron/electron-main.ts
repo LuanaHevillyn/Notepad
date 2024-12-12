@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { ElectronMenu } from './menu';
@@ -50,8 +50,24 @@ export function createWindow() {
     mainWindow?.setMenu(menu)
   });
 
-  mainWindow.on('closed', () => {
-    mainWindow?.destroy();
+  mainWindow.on('close', (event) => {
+    if (mainWindow?.getTitle().includes(' • ')) {
+      event.preventDefault();
+
+      const response = dialog.showMessageBoxSync({
+        type: 'warning',
+        buttons: ['Sim', 'Não'],
+        defaultId: 2,
+        cancelId: 2,
+        title: 'Confirmação',
+        noLink: true,
+        message: 'Você tem alterações não salvas. Deseja salvar antes de sair?',
+      });
+
+      if (response === 1) {
+        mainWindow?.destroy();
+      }
+    }
   });
 }
 
